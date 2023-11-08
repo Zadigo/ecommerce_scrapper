@@ -7,16 +7,15 @@ from itertools import islice
 
 from bs4 import BeautifulSoup
 from requests.models import Request
+from argparse import ArgumentParser
 from requests.sessions import Session
 
-from ecommerce_scrapping_1 import PROJECT_PATH, URLS_FILE, logger
-from ecommerce_scrapping_1.parsers import COMPANIES
+from ecommerce_scrapper import PROJECT_PATH, URLS_FILE, logger
+from ecommerce_scrapper.parsers import COMPANIES
 
 SESSION = Session()
 
 QUEUE = Queue()
-
-QUEUE2 = []
 
 CACHED_PRODUCTS = []
 
@@ -24,7 +23,8 @@ FAILED_URLS = []
 
 
 class URLsGenerator:
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug = debug
         with open(URLS_FILE, mode='r') as f:
             self.data = json.load(f)
 
@@ -32,8 +32,10 @@ class URLsGenerator:
         return f'<{self.__class__.__name__} [{len(self.data)}]>'
 
     def __iter__(self):
+        if self.debug:
+            return self.data[:5]
         return self.data
-    
+
     async def chunks(self, k=100):
         it = iter(self.data)
         while (batch := tuple(islice(it, k))):
@@ -93,24 +95,25 @@ async def sender(index, url):
             return response
         logger.error(f'No response for: {url}')
         return False
-    
+
 
 async def write_json(data, path):
     with open(path, mode='w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
         logger.info(f'Wrote: {len(data)} products')
 
+
 async def webhook(data):
     webhook_url = os.getenv('webhook')
     if webhook_url is not None:
         request = Request(
-            method='post', 
+            method='post',
             url=webhook_url,
             json=data,
             headers={'Content-Type': 'application/json'}
         )
         prepared_request = SESSION.prepare_request(request)
-        
+
         try:
             response = SESSION.send(prepared_request)
         except:
@@ -119,10 +122,10 @@ async def webhook(data):
             return response
 
 
-async def main():
+async def main(debug=False, company='orchestra'):
     logger.info('Started...')
-    instance = URLsGenerator()
-    
+    instance = URLsGenerator(debug=debug)
+
     async for chunk in instance.chunks():
         await QUEUE.put(chunk)
 
@@ -132,13 +135,13 @@ async def main():
         tasks = []
         for i, url in enumerate(chunks):
             tasks.append(asyncio.create_task(sender(i, url)))
-            
+
         responses = await asyncio.gather(*tasks)
-        products = await parse_responses(responses)
-        
+        products = await parse_responses(responses, company=company)
+
         items = [product.as_dict() for product in products]
         CACHED_PRODUCTS.extend(items)
-        
+
         await write_json(CACHED_PRODUCTS, PROJECT_PATH / 'products.json')
         await write_json(FAILED_URLS, PROJECT_PATH / 'failed_urls.json')
         await webhook(items)
@@ -149,8 +152,15 @@ async def main():
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('-d', '--debug', type=bool)
+    parser.add_argument('-c', '--company', type=str, default='orchestra')
+    namespace = parser.parse_args()
+
     try:
-        asyncio.run(main())
+        asyncio.run(main(debug=namespace.debug, company='lefties'))
     except KeyboardInterrupt:
-        asyncio.run(write_json(CACHED_PRODUCTS, PROJECT_PATH / 'products.json'))
+        asyncio.run(
+            write_json(CACHED_PRODUCTS, PROJECT_PATH / 'products.json')
+        )
         asyncio.run(write_json(FAILED_URLS, PROJECT_PATH / 'failed_urls.json'))

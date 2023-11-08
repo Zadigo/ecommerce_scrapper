@@ -1,7 +1,6 @@
 import dataclasses
 from functools import cached_property
-from typing import OrderedDict
-
+from collections import OrderedDict
 
 
 @dataclasses.dataclass
@@ -26,8 +25,8 @@ class Product:
 
     @cached_property
     def fields(self):
-       fields = dataclasses.fields(self)
-       return list(map(lambda x: x.name, fields))
+        fields = dataclasses.fields(self)
+        return list(map(lambda x: x.name, fields))
 
     def as_dict(self):
         data = OrderedDict()
