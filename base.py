@@ -152,13 +152,13 @@ async def main(debug=False, company='orchestra'):
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser()
-    parser.add_argument('-d', '--debug', type=bool)
-    parser.add_argument('-c', '--company', type=str, default='orchestra')
-    namespace = parser.parse_args()
+    # parser = ArgumentParser()
+    # parser.add_argument('-d', '--debug', type=bool)
+    # parser.add_argument('-c', '--company', type=str, default='orchestra')
+    # namespace = parser.parse_args()
 
     try:
-        asyncio.run(main(debug=namespace.debug, company='lefties'))
+        asyncio.run(main(debug=False, company='kiabi'))
     except KeyboardInterrupt:
         asyncio.run(
             write_json(CACHED_PRODUCTS, PROJECT_PATH / 'products.json')

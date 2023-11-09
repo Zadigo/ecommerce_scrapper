@@ -158,118 +158,22 @@ def orchestra(soup, response):
     )
 
 
-# let name = getText(document.querySelector('.lft-product-info-name'))
-# let description = getText(document.querySelector('.lft-product-info-description'))
-# let material = getText(document.querySelector('.info-composition-wrapper'))
-# let price = getText(document.querySelector('.lft-product-info-price .price'))
-# // let discountPrice = getText(document.querySelector('.product-card__info.product-detail__add-to-cart-container .product-card__price--old'))
-# let reference = getText(document.querySelector('.lft-product-info-reference'))
-# let color = getText(document.querySelector('.lft-product-info-color'))
-
-# let imageElements = Array.from(document.querySelectorAll('.lft-product-images .lft-product-image'))
-# imageElements.forEach(x => x.classList.add('image-loaded'))
-# let images = Array.from(imageElements).map(x => x.querySelector('img').src).filter(x => x && x !== "")
-
-# // let breadcrumb = Array.from(document.querySelectorAll('ol.breadcrumb li')).map(x => x.textContent.trim()).join(' > ')
-# let numberOfColors = document.querySelectorAll('div[class="lft-product-info-colors"] div[data-color-id]').length
-
-def lefties(soup, response):
-    date = datetime.datetime.now(tz=pytz.UTC)
-
+def kiabi(soup, response):
     try:
-        breadcrumbs = soup.find('ol', {'class': 'breadcrumb'}).find_all('li')
-        breadcrumbs = ' > '.join([
-            clean_text(breadcrumb.text)
-            for breadcrumb in breadcrumbs])
+        price = soup.find('p', {'id': 'price_ppr'}).text
     except:
-        breadcrumbs = None
-
-    try:
-        info_section = soup.find(
-            'div', {'class': 'col-12 col-lg-5 product-right add-to-cart-container'})
-    except:
-        pass
-    else:
-        try:
-            price1 = clean_text(info_section.find(
-                'span', {'class': 'product-price-club'}).text)
-        except:
-            price1 = None
-
-        try:
-            price2 = clean_text(info_section.find(
-                'span', {'class': 'product-price-not-club'}).text)
-        except:
-            price2 = None
-
-        price = str([price1, price2])
-
-    try:
-        attrs = {'class': 'lft-product-info-name lft-medium space-mobile'}
-        name = soup.find('div', attrs)
-        name = clean_text(name.text)
-    except:
-        name = None
-
-    try:
-        attrs = {'class': 'lft-product-info-reference'}
-        reference = soup.find('div', attrs)
-        reference = clean_text(reference.text)
-    except:
-        reference = None
-
-    try:
-        attrs = {'class': 'lft-product-info-colors'}
-        colors = soup.find('div', attrs).find_all(
-            'div', {'data-color-id': True})
-    except:
-        colors = []
-    else:
-        colors = len(colors)
-
-    try:
-        attrs = {'class': 'description-wrapper'}
-        description = soup.find('div', attrs).find('span')
-        description = clean_text(description.text)
-    except:
-        description = None
-
-    try:
-        image_elements = soup.find(
-            'div', {'class': 'lft-product-images lft-product-image'})
-        image = image_elements.find_all('img')[0].attrs.get('src', None)
-    except:
-        image = None
-
-    try:
-        color = soup.find('div', {'class': 'lft-product-info-color'})
-        color = clean_text(color.text)
-    except:
-        color = None
-
-    try:
-        sizes = []
-    except:
-        sizes = []
+        price = None
 
     return Product(
-        name,
-        description,
+        None,
+        None,
         price,
-        company='Orchestra',
-        company_url=build_origin(response),
-        breadcrumb=breadcrumbs,
-        date=str(date),
-        url=response.url,
-        images=[image],
-        sizes=sizes,
-        color=color,
-        number_of_colors=colors,
-        id_or_reference=reference
+        response.url,
+        company='Kiabi'
     )
 
 
 COMPANIES = {
     'orchestra': orchestra,
-    'lefties': lefties
+    'kiabi': kiabi
 }
